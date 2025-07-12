@@ -12,7 +12,7 @@ public class Livro implements Serializable {
 
     private String titulo;
     private String autor;
-    private int anoPublicacao;
+    private Integer anoPublicacao;
     private String isbn;
 
     // Construtor padrão é necessário para o JSF Managed Bean
@@ -44,11 +44,11 @@ public class Livro implements Serializable {
         this.autor = autor;
     }
 
-    public int getAnoPublicacao() {
+    public Integer getAnoPublicacao() {
         return anoPublicacao;
     }
 
-    public void setAnoPublicacao(int anoPublicacao) {
+    public void setAnoPublicacao(Integer anoPublicacao) {
         this.anoPublicacao = anoPublicacao;
     }
 

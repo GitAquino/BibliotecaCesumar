@@ -40,7 +40,7 @@ public class LivroBean {
             context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro de Validação", "Os campos Título, Autor e ISBN são obrigatórios."));
             return; // Apenas retorna, sem valor
         }
-        if (livro.getAnoPublicacao() == 0) {
+        if (livro.getAnoPublicacao() == null) {
             context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro de Validação", "O campo Ano de Publicação é obrigatório e não pode ser zero."));
             return; // Apenas retorna, sem valor
         }
