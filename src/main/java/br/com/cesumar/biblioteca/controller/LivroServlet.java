@@ -17,7 +17,7 @@ import java.util.List;
  * Servlet que atua como Controller para as operações de Livros.
  * Mapeado para o URL /livros
  */
-@WebServlet("/livros" )
+@WebServlet("/livros")
 public class LivroServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final LivroDAO livroDAO = new LivroDAO();
@@ -27,26 +27,26 @@ public class LivroServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String acao = request.getParameter("acao");
-
-        // Se não houver ação ou a ação for "listar", exibe a lista de livros.
-        if (acao == null || acao.equals("listar")) {
-            listarLivros(request, response);
-        } else if (acao.equals("excluir")) {
-            excluirLivro(request, response);
+        if (acao == null) {
+            acao = "listar"; // Ação padrão
         }
-    }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        String acao = request.getParameter("acao");
-
-        if (acao != null && acao.equals("cadastrar")) {
-            cadastrarLivro(request, response);
-        } else {
-            // Por padrão, redireciona para a listagem
-            listarLivros(request, response);
+        try {
+            switch (acao) {
+                case "excluir":
+                    excluirLivro(request, response);
+                    break;
+                case "listar":
+                default: // Se a ação for desconhecida, apenas lista os livros
+                    listarLivros(request, response);
+                    break;
+            }
+        } catch (Exception e) {
+            // Tratamento genérico de erro para o Servlet
+            e.printStackTrace(); // Loga o erro
+            request.setAttribute("erroFatal", "Ocorreu um erro inesperado no servidor: " + e.getMessage());
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/jsp/erro.jsp");
+            dispatcher.forward(request, response);
         }
     }
 
@@ -58,57 +58,34 @@ public class LivroServlet extends HttpServlet {
         dispatcher.forward(request, response);
     }
 
-    private void cadastrarLivro(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException {
-        String titulo = request.getParameter("titulo");
-        String autor = request.getParameter("autor");
-        String anoStr = request.getParameter("anoPublicacao");
-        String isbn = request.getParameter("isbn");
-
-        // Tratamento de erros: campos vazios
-        if (titulo == null || titulo.trim().isEmpty() ||
-                autor == null || autor.trim().isEmpty() ||
-                anoStr == null || anoStr.trim().isEmpty() ||
-                isbn == null || isbn.trim().isEmpty()) {
-
-            request.setAttribute("erro", "Todos os campos são obrigatórios.");
-            // Reencaminha para a página de cadastro (que será feita com JSF)
-            RequestDispatcher dispatcher = request.getRequestDispatcher("cadastroLivro.xhtml");
-            dispatcher.forward(request, response);
-            return;
-        }
-
-        // Tratamento de erro: ISBN já existe
-        if (livroDAO.buscarPorIsbn(isbn) != null) {
-            request.setAttribute("erro", "Já existe um livro com este ISBN.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("cadastroLivro.xhtml");
-            dispatcher.forward(request, response);
-            return;
-        }
-
-        try {
-            int anoPublicacao = Integer.parseInt(anoStr);
-            Livro novoLivro = new Livro(titulo, autor, anoPublicacao, isbn);
-            livroDAO.adicionar(novoLivro);
-
-            // Redireciona para a lista de livros após o cadastro para evitar reenvio do formulário
-            response.sendRedirect("livros?acao=listar");
-
-        } catch (NumberFormatException e) {
-            // Tratamento de erro: ano de publicação inválido
-            request.setAttribute("erro", "O ano de publicação deve ser um número válido.");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("cadastroLivro.xhtml");
-            dispatcher.forward(request, response);
-        }
-    }
-
     private void excluirLivro(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         String isbn = request.getParameter("isbn");
-        if (isbn != null && !isbn.isEmpty()) {
-            livroDAO.removerPorIsbn(isbn);
+
+        // Validação: verifica se o ISBN foi fornecido
+        if (isbn == null || isbn.trim().isEmpty()) {
+            request.getSession().setAttribute("erroExclusao", "ISBN não fornecido para exclusão.");
+            response.sendRedirect("livros?acao=listar");
+            return;
         }
-        // Redireciona de volta para a lista de livros
+
+        // Validação: verifica se o livro realmente existe antes de tentar remover
+        if (livroDAO.buscarPorIsbn(isbn) == null) {
+            request.getSession().setAttribute("erroExclusao", "Livro com o ISBN informado não foi encontrado para exclusão.");
+            response.sendRedirect("livros?acao=listar");
+            return;
+        }
+
+        livroDAO.removerPorIsbn(isbn);
+        request.getSession().setAttribute("sucessoExclusao", "Livro removido com sucesso!");
         response.sendRedirect("livros?acao=listar");
+    }
+
+    // O método doPost não é mais usado para cadastro, pois o JSF cuida disso.
+    // Pode ser removido ou mantido para futuras funcionalidades.
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        doGet(request, response);
     }
 }

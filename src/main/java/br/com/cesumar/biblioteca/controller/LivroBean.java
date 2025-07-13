@@ -3,17 +3,15 @@ package br.com.cesumar.biblioteca.controller;
 import br.com.cesumar.biblioteca.dao.LivroDAO;
 import br.com.cesumar.biblioteca.model.Livro;
 
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
-import jakarta.enterprise.context.RequestScoped;
 
 import java.io.IOException;
+import java.time.Year;
 
-/**
- * Managed Bean para a interface de cadastro de livros com JSF.
- */
 @Named
 @RequestScoped
 public class LivroBean {
@@ -21,6 +19,7 @@ public class LivroBean {
     private Livro livro = new Livro();
     private final LivroDAO livroDAO = new LivroDAO();
 
+    // Getters e Setters
     public Livro getLivro() {
         return livro;
     }
@@ -29,35 +28,46 @@ public class LivroBean {
         this.livro = livro;
     }
 
-    public void cadastrar() throws IOException { // <-- Mude o retorno para void e adicione throws IOException
+    /**
+     * Retorna o ano atual para ser usado na validação da View (JSF).
+     * @return O número do ano atual.
+     */
+    public int getAnoAtual() {
+        return Year.now().getValue();
+    }
+
+    public void cadastrar() {
         FacesContext context = FacesContext.getCurrentInstance();
         ExternalContext ec = context.getExternalContext();
 
-        // ... (todo o código de validação continua exatamente o mesmo) ...
-        if (livro.getTitulo() == null || livro.getTitulo().trim().isEmpty() ||
-                livro.getAutor() == null || livro.getAutor().trim().isEmpty() ||
-                livro.getIsbn() == null || livro.getIsbn().trim().isEmpty()) {
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro de Validação", "Os campos Título, Autor e ISBN são obrigatórios."));
-            return; // Apenas retorna, sem valor
-        }
-        if (livro.getAnoPublicacao() == null) {
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro de Validação", "O campo Ano de Publicação é obrigatório e não pode ser zero."));
-            return; // Apenas retorna, sem valor
-        }
-        if (livroDAO.buscarPorIsbn(livro.getIsbn()) != null) {
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro de Validação", "Já existe um livro cadastrado com este ISBN."));
-            return; // Apenas retorna, sem valor
-        }
+        try {
+            // A validação de formato e obrigatoriedade é feita pelo JSF na View.
+            // Aqui focamos na regra de negócio.
 
-        // Se todas as validações passaram, adicione o livro
-        livroDAO.adicionar(livro);
+            // Validação de ISBN duplicado
+            if (livroDAO.buscarPorIsbn(livro.getIsbn()) != null) {
+                context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "ISBN Inválido", "Já existe um livro cadastrado com este ISBN."));
+                return; // Permanece na página para correção
+            }
 
-        // Adiciona uma mensagem de sucesso que será exibida na próxima página
-        ec.getFlash().setKeepMessages(true);
-        context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Sucesso", "Livro cadastrado com sucesso!"));
+            // Se todas as validações passaram, adiciona o livro
+            livroDAO.adicionar(livro);
 
-        // --- A GRANDE MUDANÇA ESTÁ AQUI ---
-        // Redireciona manualmente para o Servlet de listagem
-        ec.redirect(ec.getRequestContextPath() + "/livros?acao=listar");
+            // Adiciona uma mensagem de sucesso para a próxima página
+            ec.getFlash().setKeepMessages(true);
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Sucesso!", "Livro cadastrado com sucesso."));
+
+            // Redireciona para a lista de livros
+            ec.redirect(ec.getRequestContextPath() + "/livros?acao=listar");
+
+        } catch (IOException e) {
+            // Erro de redirecionamento (raro, mas possível)
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_FATAL, "Erro Crítico", "Não foi possível redirecionar a página. Contate o suporte."));
+            e.printStackTrace(); // Loga o erro no console do servidor
+        } catch (Exception e) {
+            // Captura qualquer outra exceção inesperada durante o processo
+            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_FATAL, "Erro Inesperado", "Ocorreu um erro inesperado ao tentar cadastrar o livro."));
+            e.printStackTrace(); // Loga o erro no console do servidor
+        }
     }
 }
