@@ -18,7 +18,7 @@
             background: #ffffff;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05 );
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05  );
             max-width: 600px;
             margin: auto;
         }
@@ -32,7 +32,6 @@
         /* Grid para alinhar Rótulos e Campos */
         .form-grid {
             display: grid;
-            /* Define um template de 3 colunas: Rótulo, Campo, e uma terceira que será usada implicitamente */
             grid-template-columns: max-content 1fr;
             gap: 8px 12px; /* Reduz o gap vertical */
             align-items: center;
@@ -103,7 +102,8 @@
             color: #D8000C;
             font-size: 0.9em;
             padding-top: 4px;
-            display: block; /* Garante que a mensagem ocupe sua própria linha abaixo do input */
+            /* Garante que a mensagem ocupe a coluna do input */
+            grid-column: 2 / 3;
         }
     </style>
 </h:head>
