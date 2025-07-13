@@ -82,8 +82,11 @@ BibliotecaCesumar/
 
 5. Acesse a aplicação pelo navegador:
    ```
-   http://localhost:8080/BibliotecaCesumar/
+   http://localhost:8082/BibliotecaCesumar_war_exploded/
    ```
+   Observações:
+   - Deve definir a porta HTTP assim como configurada no servidor tomcat
+   - Deve definir o artifact com o arquivo war_exploded na aba Deployment nas configurações do servidor tomcat
 
 ## Uso da Aplicação
 
